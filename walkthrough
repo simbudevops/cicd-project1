@@ -21,6 +21,8 @@ echo "=========================================="
 echo " Generate SSH Key"
 echo "=========================================="
 ssh-keygen -t ed25519 -C "you@example.com" -f ~/.ssh/id_ed25519 -N ""
+or 
+ssh-keygen -t ed25519 -C "you@example.com"
 
 echo "=========================================="
 echo " PUBLIC KEY - Copy & Add to GitHub"
