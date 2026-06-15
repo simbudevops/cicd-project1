@@ -1,0 +1,159 @@
+pre-requestie:
+
+Pushing code from local to github:
+
+#!/bin/bash
+
+echo "=========================================="
+echo " Install Git"
+echo "=========================================="
+sudo apt update -y
+sudo apt install git -y
+git --version
+
+echo "=========================================="
+echo " Configure Git"
+echo "=========================================="
+git config --global user.name "Your Name"
+git config --global user.email "you@example.com"
+
+echo "=========================================="
+echo " Generate SSH Key"
+echo "=========================================="
+ssh-keygen -t ed25519 -C "you@example.com" -f ~/.ssh/id_ed25519 -N ""
+
+echo "=========================================="
+echo " PUBLIC KEY - Copy & Add to GitHub"
+echo " GitHub > Settings > SSH Keys > New SSH Key"
+echo "=========================================="
+cat ~/.ssh/id_ed25519.pub
+
+echo "=========================================="
+echo " Test GitHub Connection"
+echo "=========================================="
+ssh -T git@github.com -o StrictHostKeyChecking=no
+
+echo "=========================================="
+echo " PRIVATE KEY - Copy & Add to Jenkins"
+echo " Jenkins > Credentials > SSH Username with private key"
+echo "=========================================="
+cat ~/.ssh/id_ed25519
+
+echo "=======================================
+
+
+#git remote set-url origin git@github.com:simbudevops/cicd-project1.git
+
+
+
+Step1:
+
+###Deploying machine for project using terraform###
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+# Configure AWS Provider
+provider "aws" {
+  region = "ap-south-1" # Change region as required
+}
+
+resource "aws_security_group" "cicd_SG" {
+  name        = "cicd_SG"
+  description = "Allow inbound traffic"
+
+  ingress = [
+    for port in [22, 80, 443, 8080, 9000, 3000] : {
+      description      = "Inbound Rules"
+      from_port        = port
+      to_port          = port
+      protocol         = "tcp"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = []
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+    }
+  ]
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "cicd_SG"
+  }
+}
+
+resource "aws_instance" "cicd_VM" {
+  ami                    = "ami-0388e3ada3d9812da" # Change AMI as per region
+  instance_type          = "m7i-flex.large"
+  key_name               = "testing-1" # Change key name as per your setup
+  vpc_security_group_ids = [aws_security_group.cicd_SG.id]
+  user_data              = templatefile("./install.sh", {})
+
+  tags = {
+    Name = "cicd"
+  }
+
+  root_block_device {
+    volume_size = 40
+  }
+}
+
+output "public_ip" {
+  value = aws_instance.cicd_VM.public_ip
+}
+=====================================================================================
+Step2:
+
+###Installing jenkins, docker and maven####
+
+#!/bin/bash
+# Update and install Java
+sudo apt update -y
+sudo apt install fontconfig openjdk-21-jre -y
+java -version
+
+# Add Jenkins repo and install
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc]" \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update
+sudo apt install jenkins -y
+sudo systemctl enable jenkins
+
+# Install Docker and run SonarQube as container
+sudo apt-get update
+sudo apt-get install docker.io -y
+sudo usermod -aG docker $USER
+sudo usermod -aG docker jenkins
+sudo chmod 777 /var/run/docker.sock
+
+# Install Maven
+sudo apt-get update
+sudo apt install maven -y
+
+# Print Jenkins initial admin password
+echo ""
+echo "=========================================="
+echo " Jenkins Initial Admin Password:"
+echo "=========================================="
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+echo "=========================================="
+
+####################################################################################################
+
+step3:
+
