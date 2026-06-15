@@ -128,7 +128,8 @@ java -version
 javac -version
 
 # Verify JDK path for Jenkins Tools
-update-java-alternatives -l
+update-java-alternatives -l or 
+update-alternatives --config java
 
 # Add Jenkins repo and install
 sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
