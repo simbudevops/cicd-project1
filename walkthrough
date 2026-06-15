@@ -118,13 +118,17 @@ output "public_ip" {
 =====================================================================================
 Step2:
 
-###Installing jenkins, docker and maven####
+###Installing java, jenkins, docker and maven####
 
 #!/bin/bash
 # Update and install Java
 sudo apt update -y
-sudo apt install fontconfig openjdk-21-jre -y
+sudo apt install fontconfig openjdk-21-jdk -y
 java -version
+javac -version
+
+# Verify JDK path for Jenkins Tools
+update-java-alternatives -l
 
 # Add Jenkins repo and install
 sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
@@ -157,5 +161,19 @@ echo "=========================================="
 
 ####################################################################################################
 
+plugin -> maven integration & Tools -> java, maven installation.( path update-java-alternatives -l & mvn -v)
+plugin -> Github branch source plugin disabled and enabled github plugin
+
+################################################################################################
+
+GitHub hook trigger for GITScm polling
+
+
+
+deploy to container -> plugin
+http://IP:8080/github-webhook/
+
+
 step3:
+
 
